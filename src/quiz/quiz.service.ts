@@ -11,19 +11,23 @@ export class QuizService {
     let score = 0;
 
     // Loop through answers and compare with correct answers
-    answers.forEach((answer, index) => {
-      if (answer === correctAnswers[index]) {
-        score += 3; // 3 points for each correct answer
-      }
-    });
+    // answers.forEach((answer, index) => {
+    //   if (answer === correctAnswers[index]) {
+    //     score += 3; // 3 points for each correct answer
+    //   }
+    // });
 
     return score; // Return the calculated score
   }
 
+  checkStatus(score: number){
+    return score>12 ? true : false;
+  }
+
   // Save quiz result to Firebase
-  async saveQuizResult(userId: string, answers: string[], score: number) {
+  async saveQuizResult(userId: string, answers: string[], score: number, isDepressed: boolean) {
     try {
-      return await this.firebaseService.saveQuizResult(userId, answers, score);
+      return await this.firebaseService.saveQuizResult(userId, answers, score,isDepressed);
     } catch (error) {
       console.error('Error saving quiz result:', error);
       return { success: false, message: 'Error saving quiz result.' };
