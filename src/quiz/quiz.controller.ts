@@ -12,8 +12,9 @@ export class QuizController {
   ) {
     const { userId, answers } = body;
     const score = this.quizService.calculateScore(userId, answers);
+    const isDepressed = this.quizService.checkStatus(score);
 
-    const result = await this.quizService.saveQuizResult(userId, answers, score);
+    const result = await this.quizService.saveQuizResult(userId, answers, score, isDepressed);
     return result;
   }
 
