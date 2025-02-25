@@ -10,9 +10,9 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 
 
