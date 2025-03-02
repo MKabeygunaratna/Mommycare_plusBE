@@ -4,7 +4,6 @@ import { TodoService } from './todo.service';
 import { CreateTaskDto } from './create-task.dto';
 
 
-
 @Controller('todo')
 export class TodoController {
   constructor(private readonly todoService: TodoService) {}
@@ -12,7 +11,6 @@ export class TodoController {
   // @Post('add')
   // async addTask(@Body() createTaskDto: CreateTaskDto) {
   //   return await this.todoService.addTask(createTaskDto);
-
   // }
 
   @Post('add')

@@ -39,18 +39,17 @@ export class TodoService {
   //   const docRef = await this.firestore.collection(this.collectionName).add(task);
   //   return { id: docRef.id, ...task };
   // }
-
+    
     async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
       
       try{
         return await this.firebaseService.savetodolist(title,description,date,isRecurring);
-
+        
       }catch(error){
         console.error('Error saving quiz result:', error);
         return {success: false,message: 'Error saving todo-list result'};
       }
 }
-
 
   async getTasks() {
     const snapshot = await this.firestore.collection(this.collectionName).get();
