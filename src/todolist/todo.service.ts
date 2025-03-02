@@ -9,6 +9,7 @@ export class TodoService {
  private firestore = new Firestore();
   private collectionName = 'tasks';
  constructor(private readonly firebaseService: FirebaseService) {}
+
   // async addTask(createTaskDto: CreateTaskDto) {
   //   const { title, description, date, time, isRecurring } = createTaskDto;
   //   const task = {
@@ -39,7 +40,7 @@ export class TodoService {
   //   return { id: docRef.id, ...task };
   // }
 
-async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
+    async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
       
       try{
         return await this.firebaseService.savetodolist(title,description,date,isRecurring);
@@ -49,7 +50,6 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
         return {success: false,message: 'Error saving todo-list result'};
       }
 }
-
 
 
   async getTasks() {
@@ -68,4 +68,5 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
     await taskRef.delete();
     return { message: 'Task deleted successfully', id };
   }
+
 }
