@@ -85,7 +85,7 @@ async savetodolist(title: string){
 });
 
 console.log(`Quiz result saved for user: ${title}`);
-return { success: true, message: 'Quiz result saved successfully' };
+return { success: true, message: 'Activities have been saved successfully' };
 } catch (error) {
 console.error('Error saving quiz result:', error);
 return { success: false, message: error.message };
