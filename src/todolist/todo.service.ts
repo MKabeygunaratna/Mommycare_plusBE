@@ -39,10 +39,10 @@ export class TodoService {
   //   return { id: docRef.id, ...task };
   // }
 
-async savetodolist(title){
+async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
       
       try{
-        return await this.firebaseService.savetodolist(title);
+        return await this.firebaseService.savetodolist(title,description,date,isRecurring);
 
       }catch(error){
         console.error('Error saving quiz result:', error);

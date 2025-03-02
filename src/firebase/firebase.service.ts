@@ -64,25 +64,32 @@ export class FirebaseService {
   }
 
 //save the todo list
-async savetodolist(title: string){
+async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
   try {
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: users/${title}`);
     
     // Ensure document exists
+    // await userRef.set(
+    //   { title, todolistDetails: []},
+    //   { merge: true }
+    // );
+
     await userRef.set(
-      { title },
+      { title,description,date,isRecurring },
       { merge: true }
     );
-
-    console.log(`Document users/${title} initialized`);
-
-   await userRef.update({
-  quizResults: admin.firestore.FieldValue.arrayUnion({
-    title
      
-  }),
-});
+    console.log(`Document users todo list /${title} initialized`);
+
+//    await userRef.update({
+//     todolistDetails : admin.firestore.FieldValue.arrayUnion({
+//     description,
+//     date,
+//     isRecurring
+     
+//   }),
+// });
 
 console.log(`Quiz result saved for user: ${title}`);
 return { success: true, message: 'Activities have been saved successfully' };
