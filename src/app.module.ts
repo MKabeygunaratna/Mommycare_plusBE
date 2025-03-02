@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
-import { QuizModule } from 'src/quiz/quiz.module';
+import { QuizModule } from './quiz/quiz.module';
+import { EmailModule } from './email/email.module'; // Import EmailModule
 
 @Module({
-  imports: [QuizModule],
+  imports: [QuizModule, EmailModule],  // Include EmailModule here
 })
 export class AppModule {}

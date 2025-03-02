@@ -15,7 +15,7 @@ const db = admin.firestore();
 export class FirebaseService {
 
   // Save Quiz Result to Firestore
-  async saveQuizResult(userId: string, answers: string[], score: number) {
+  async saveQuizResult(userId: string, answers: number[], score: number) {
     try {
       const userRef = db.collection('users').doc(userId);
       console.log(`Checking document: users/${userId}`);
