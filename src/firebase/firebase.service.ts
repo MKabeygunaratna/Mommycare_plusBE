@@ -62,4 +62,35 @@ export class FirebaseService {
       return { success: false, message: error.message };
     }
   }
+
+//save the todo list
+async savetodolist(title: string){
+  try {
+    const userRef = db.collection('usersT').doc(title);
+    console.log(`Checking document: users/${title}`);
+    
+    // Ensure document exists
+    await userRef.set(
+      { title },
+      { merge: true }
+    );
+
+    console.log(`Document users/${title} initialized`);
+
+   await userRef.update({
+  quizResults: admin.firestore.FieldValue.arrayUnion({
+    title
+     
+  }),
+});
+
+console.log(`Quiz result saved for user: ${title}`);
+return { success: true, message: 'Quiz result saved successfully' };
+} catch (error) {
+console.error('Error saving quiz result:', error);
+return { success: false, message: error.message };
+    }
+  
+    }
+
 }
