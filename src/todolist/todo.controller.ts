@@ -21,7 +21,7 @@ export class TodoController {
    // const addtodo  = this.todoService.addTask(title, description,date,isRecurring)
     // return await this.todoService.addTask(createTaskDto);
 
-    const savedfirebase = this.todoService.savetodolist(title);
+    const savedfirebase = this.todoService.savetodolist(title,description,date,isRecurring);
       return savedfirebase;
   }
 
