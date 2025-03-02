@@ -91,13 +91,14 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
 //   }),
 // });
 
-console.log(`Quiz result saved for user: ${title}`);
+//console.log(`Todo list saved for user: ${title}`);
+
+
 return { success: true, message: 'Activities have been saved successfully' };
 } catch (error) {
-console.error('Error saving quiz result:', error);
+console.error('Error saving the to do list:', error);
 return { success: false, message: error.message };
     }
-  
     }
 
 }
