@@ -69,9 +69,10 @@ export class TodoService {
 
   async markTaskAsDone(id: string) {
     const taskRef = this.firestore.collection(this.collectionName).doc(id);
-    await taskRef.update({ isCompleted: true });
+    await taskRef.update({ isRecurring: true });
     return { message: 'Task marked as completed', id };
   }
+
 
   async deleteTask(id: string) {
     const taskRef = this.firestore.collection(this.collectionName).doc(id);
