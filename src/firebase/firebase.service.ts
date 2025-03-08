@@ -75,6 +75,7 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
     //   { merge: true }
     // );
 
+
     await userRef.set(
       { title,description,date,isRecurring },
       { merge: true }
@@ -100,5 +101,26 @@ console.error('Error saving the to do list:', error);
 return { success: false, message: error.message };
     }
     }
+
+  // Retreive the data of the user
+    async gettodolist(title: string){
+      try{
+       const userRef = db.collection('userT').doc(title);
+       const userGet = await userRef.get();
+      
+       if(!userGet.exists){
+         return { success: false, message: 'Title not found' };
+       }
+ 
+       const dataExctract = userGet.data();
+     
+        return {success: true, title: dataExctract?.title};
+ 
+     }catch (error) {
+       console.error('Error retrieving Todo List:', error);
+       return { success: false, message: error.message };
+     }
+     }
+
 
 }
