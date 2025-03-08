@@ -34,6 +34,7 @@ export class TodoController {
   async markTaskAsDone(@Param('id') id: string) {
     return await this.todoService.markTaskAsDone(id);
   }
+  
 
   @Delete(':id')
   async deleteTask(@Param('id') id: string) {
