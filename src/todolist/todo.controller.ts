@@ -26,8 +26,8 @@ export class TodoController {
 
 
   @Get('saved')
-  async getTasks() {
-    return await this.todoService.getTasks();
+  async getTasks(@Param('title') title: string) {
+    return await this.todoService.getTasks(title);
   }
 
   @Put(':id')
