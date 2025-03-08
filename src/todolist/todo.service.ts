@@ -51,10 +51,21 @@ export class TodoService {
       }
 }
 
-  async getTasks() {
-    const snapshot = await this.firestore.collection(this.collectionName).get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // async getTasks() {
+  //   const snapshot = await this.firestore.collection(this.collectionName).get();
+  //   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // }
+    
+  // Retrieve quiz results for a user
+  async getTasks(title: string) {
+    try {
+      return await this.firebaseService.gettodolist(title);
+    } catch (error) {
+      console.error('Error retrieving To do list:', error);
+      return { success: false, message: 'Error retrieving to do lists.' };
+    }
   }
+
 
   async markTaskAsDone(id: string) {
     const taskRef = this.firestore.collection(this.collectionName).doc(id);
