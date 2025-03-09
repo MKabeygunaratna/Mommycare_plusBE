@@ -123,4 +123,20 @@ async gettodolist(title: string){
  }
  }
 
+ async saveVaccinationRecords(){
+  let title = "mani";
+  const userRef = db.collection('usersV').doc(title);
+  console.log(`Checking the collection is being created: with title ${title}`)
+
+
+  await userRef.set(
+    { title },
+    { merge: true }
+  );
+   
+  
+
+ }
+
+
 }
