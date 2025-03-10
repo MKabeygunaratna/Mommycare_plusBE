@@ -30,9 +30,16 @@ export class TodoController {
     return await this.todoService.getTasks(title);
   }
 
-  @Put(':id')
-  async markTaskAsDone(@Param('id') id: string) {
-    return await this.todoService.markTaskAsDone(id);
+  // @Put(':id')
+  // async markTaskAsDone(@Param('id') id: string,isRecurring) {
+  //   // return await this.todoService.markTaskAsDone(id);
+  //   return await this.todoService.markTaskAsDone(title,isRecurring);
+  // }
+
+  @Put('update/:title')
+  async markTaskAsDone(@Param('title') title: string) {
+   
+    return await this.todoService.markTaskAsDone(title);
   }
   
 

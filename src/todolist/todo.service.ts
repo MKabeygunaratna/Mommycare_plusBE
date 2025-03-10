@@ -67,10 +67,19 @@ export class TodoService {
   }
 
 
-  async markTaskAsDone(id: string) {
-    const taskRef = this.firestore.collection(this.collectionName).doc(id);
-    await taskRef.update({ isRecurring: true });
-    return { message: 'Task marked as completed', id };
+  async markTaskAsDone(title: string) {
+   const isRecurring: boolean = true;
+   console.log(title);
+   try{
+    return await this.firebaseService.updatetodolist(title,isRecurring);
+   }catch(error){
+    console.error('Error retrieving mark as done.',error);
+    return{success: false,message: 'Erro retrieving mark as done.'};
+   }
+
+    // const taskRef = this.firestore.collection(this.collectionName).doc(id);
+    // await taskRef.update({ isRecurring: true });
+    // return { message: 'Task marked as completed', id };
   }
 
 
