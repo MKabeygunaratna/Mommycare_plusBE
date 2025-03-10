@@ -75,7 +75,6 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
     //   { merge: true }
     // );
 
-
     await userRef.set(
       { title,description,date,isRecurring },
       { merge: true }
@@ -99,7 +98,7 @@ return { success: true, message: 'Activities have been saved successfully' };
 } catch (error) {
 console.error('Error saving the to do list:', error);
 return { success: false, message: error.message };
-    }
+       }
     }
 
   
@@ -120,22 +119,40 @@ async gettodolist(title: string){
  }catch (error) {
    console.error('Error retrieving Todo List:', error);
    return { success: false, message: error.message };
- }
+      }
  }
 
- async saveVaccinationRecords(){
+//update the to do list task
+   async updatetodolist(title:string, isRecurring: boolean){
+    console.log('passed the data');
+    const userRef = db.collection('usersT').doc(title);
+    console.log(`Checking document: usersT/${title}`);
+     
+    await userRef.update({      
+          isRecurring
+      });
+
+   } 
+
+
+// save the vaccination records
+ async saveVaccinationRecords(vname:string, age: number, tvaccination: string, date: Date){
   let title = "mani";
-  const userRef = db.collection('usersV').doc(title);
-  console.log(`Checking the collection is being created: with title ${title}`)
-
+  const userRef = db.collection('usersV').doc(vname);
+  console.log(`Checking the collection is being created: with title ${vname}`)
 
   await userRef.set(
-    { title },
+    { vname,
+      age,
+      tvaccination,
+      date },
     { merge: true }
   );
    
-  
+ }
 
+ async updateVaccinationRecords(){
+            
  }
 
 

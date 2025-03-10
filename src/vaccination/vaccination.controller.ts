@@ -6,10 +6,10 @@ export class VaccinationController{
 
  @Post('save')
  async saveVaccination(
-    @Body() body: {age: number; tvaccination: string; date: Date}
+    @Body() body: {vname: string;age: number; tvaccination: string; date: Date}
 ){
-    const{ age , tvaccination, date} = body;
-    const score = await this.vacconatioService.saveVaccinationRecords();
+    const{ vname ,age , tvaccination, date} = body;
+    const score = await this.vacconatioService.saveVaccinationRecords(vname,age , tvaccination, date);
     return score;
  }
 
