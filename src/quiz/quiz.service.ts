@@ -16,10 +16,14 @@ export class QuizService {
 
   // Determine the depression level
   determineDepressionLevel(score: number): string {
-    if (score >= 19) return 'Severe';
-    if (score >= 12) return 'Mild';
-    return 'Normal';
-  }
+    if (score >= 19) {
+        return 'Severe';
+    } else if (score >= 12) {
+        return 'Mild';
+    } else {
+        return 'Normal';
+    }
+}
 
   // Process the quiz submission: Calculate score, save, and send email
   async processQuizSubmission(
