@@ -18,13 +18,13 @@ export class ChatbotService {
       throw new Error("No text provided.");
     }
 
-    const sinhalaPercentage = (sinhalaMatches.length / totalChars) * 100;
-    const englishPercentage = (englishMatches.length / totalChars) * 100;
+    const sinhalaPercentage = ((sinhalaMatches.length / totalChars) * 100 );
+    const englishPercentage = (englishMatches.length / totalChars) * 100 + 10;
 
     console.log(`Sinhala: ${sinhalaPercentage.toFixed(2)}%`);
     console.log(`English: ${englishPercentage.toFixed(2)}%`);
 
-    return englishPercentage > 75 ? this.ENGLISH_LLM_API_URL : this.SINHALA_LLM_API_URL;
+    return englishPercentage > sinhalaPercentage ? this.ENGLISH_LLM_API_URL : this.SINHALA_LLM_API_URL;
   }
 
   async getLLMResponse(query: string) {
