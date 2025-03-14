@@ -127,7 +127,8 @@ async gettodolist(title: string){
     console.log('passed the data');
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: usersT/${title}`);
-     
+      
+    
     await userRef.update({      
           isRecurring
       });
@@ -137,7 +138,7 @@ async gettodolist(title: string){
 
 // save the vaccination records
  async saveVaccinationRecords(vname:string, age: number, tvaccination: string, date: Date){
-  let title = "mani";
+  
   const userRef = db.collection('usersV').doc(vname);
   console.log(`Checking the collection is being created: with title ${vname}`)
 
