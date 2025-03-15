@@ -1,9 +1,16 @@
 import { Module } from '@nestjs/common';
+import { MulterModule } from '@nestjs/platform-express';
+import * as multer from 'multer';  
 import { ChatbotController } from './chatbot.controller';
 import { ChatbotService } from './chatbot.service';
 
 @Module({
-  controllers: [ChatbotController],  // Register controllers
-  providers: [ChatbotService],      // Register services
+  imports: [
+    MulterModule.register({
+      storage: multer.memoryStorage(),
+    }),
+  ],
+  controllers: [ChatbotController],
+  providers: [ChatbotService],
 })
 export class ChatbotModule {}

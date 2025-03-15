@@ -1,39 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import FormData from 'form-data';
+import { Express } from 'express';
 
 @Injectable()
 export class ChatbotService {
-  private ENGLISH_LLM_API_URL = 'http://127.0.0.1:8000/get_answer/';
-  private SINHALA_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_sinhala/';
+  private VOICE_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_voice/';
 
-  private detectLanguagePercentage(text: string): string {
-    const sinhalaRegex = /[\u0D80-\u0DFF]/g; // Unicode range for Sinhala script
-    const englishRegex = /[a-zA-Z]/g;
-
-    const sinhalaMatches = text.match(sinhalaRegex) || [];
-    const englishMatches = text.match(englishRegex) || [];
-
-    const totalChars = text.length;
-    if (totalChars === 0) {
-      throw new Error("No text provided.");
-    }
-
-    const sinhalaPercentage = ((sinhalaMatches.length / totalChars) * 100 );
-    const englishPercentage = (englishMatches.length / totalChars) * 100 + 10;
-
-    console.log(`Sinhala: ${sinhalaPercentage.toFixed(2)}%`);
-    console.log(`English: ${englishPercentage.toFixed(2)}%`);
-
-    return englishPercentage > sinhalaPercentage ? this.ENGLISH_LLM_API_URL : this.SINHALA_LLM_API_URL;
-  }
-
-  async getLLMResponse(query: string) {
+  async getLLMVoiceResponse(audioFile: Express.Multer.File) {
     try {
-      const url = this.detectLanguagePercentage(query);
-      const response = await axios.post(url, { query });
+      if (!audioFile || !audioFile.buffer) {
+        throw new Error('Invalid file upload');
+      }
+
+      const formData = new FormData();
+      formData.append('audio_file', audioFile.buffer, {
+        filename: audioFile.originalname,
+        contentType: audioFile.mimetype,
+      });
+
+      const response = await axios.post(this.VOICE_LLM_API_URL, formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      });
+
       return response.data;
     } catch (error) {
-      return { error: 'Failed to get response from LLM', details: error.message };
+      return { error: 'Failed to process voice input', details: error.message };
     }
   }
 }
