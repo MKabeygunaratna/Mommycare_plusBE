@@ -157,4 +157,81 @@ async gettodolist(title: string){
  }
 
 
+
+
+ async sendMessage (userId: string, username: string, message: string){
+  try{
+  const messageData = {
+    userId,
+    username,
+    message,
+    timestamp: new Date().toISOString(),
+  };
+  
+  const usersChat = await db.collection('ChatMsg').add(messageData);
+  console.log(`Document users/${username} initialized`);
+
+  return { success: true, message: 'chat saved successfully' };
+
+  }catch(error){
+    console.error('Error saving chat details:', error);
+    return { success: false, message: error.message };
+  }     
+}
+
+
+// async sendMessageWEb ( message: any, community: string){
+//   try{
+      
+//   const usersChat =  db.collection('ChatMsg').doc(community);
+//   console.log(`Document users/${community} initialized`);
+
+//   await usersChat.set(
+//     { messages: []},
+//     { merge: true }
+//   );
+
+//   await usersChat.update({
+//     messages: admin.firestore.FieldValue.arrayUnion({
+//         text: message,
+//     })
+// });
+
+//   return { success: true, message: 'chat saved successfully' };
+
+//   }catch(error){
+//     console.error('Error saving chat details:', error);
+//     return { success: false, message: error.message };
+//   }     
+// }
+
+async sendMessageWEb(message: any, community: string) {
+  try {
+      const usersChat = db.collection('ChatMsg').doc(community);
+      console.log(`Document ChatMsg/${community} initialized`);
+
+      // Generate timestamp separately
+      const timestamp = new Date().toISOString(); 
+
+      await usersChat.set(
+          { messages: [] }, // Ensure the field exists
+          { merge: true }
+      );
+
+      await usersChat.update({
+          messages: admin.firestore.FieldValue.arrayUnion({
+              text: message,
+              timestamp: timestamp // Use the pre-generated timestamp
+          })
+      });
+
+      return { success: true, message: 'Chat saved successfully' };
+
+  } catch (error) {
+      console.error('Error saving chat details:', error);
+      return { success: false, message: error.message };
+  }
+}
+
+
 }
