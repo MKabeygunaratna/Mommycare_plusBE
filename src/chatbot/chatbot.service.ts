@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
 @Injectable()
-export class ChatbotService {
+export class ChatbotService { 
   private ENGLISH_LLM_API_URL = 'http://127.0.0.1:8000/get_answer/';
   private SINHALA_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_sinhala/';
 

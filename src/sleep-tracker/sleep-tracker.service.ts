@@ -1,28 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import { googleFitConfig } from '../config/google-fit.config';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class SleepTrackerService {
-  private googleFitApiUrl = 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate';
+  constructor(private readonly httpService: HttpService) {}
 
-  async getSleepData(accessToken: string): Promise<any> {
+  async getSleepData(accessToken: string) {
+    const url = 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate';
+
     const requestBody = {
-      aggregateBy: [
-        { dataTypeName: 'com.google.sleep.segment' }
-      ],
+      aggregateBy: [{ dataTypeName: 'com.google.sleep.segment' }],
       bucketByTime: { durationMillis: 86400000 }, // 1 day
       startTimeMillis: Date.now() - 7 * 24 * 60 * 60 * 1000, // Last 7 days
-      endTimeMillis: Date.now()
+      endTimeMillis: Date.now(),
+    };
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
     };
 
     try {
-      const response = await axios.post(this.googleFitApiUrl, requestBody, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await firstValueFrom(this.httpService.post(url, requestBody, { headers }));
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch sleep data: ${error.message}`);
+      console.error('Error fetching sleep data:', error.response?.data || error.message);
+      throw new Error('Failed to fetch sleep data');
     }
   }
 }
