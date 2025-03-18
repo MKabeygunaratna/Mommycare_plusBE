@@ -33,7 +33,7 @@ export class ChatbotService {
       const response = await axios.post(url, { query });
       return response.data;
     } catch (error) {
-      return { error: 'Failed to get response from LLM', details: error.message };
-    }
-  }
+      return { error: 'Failed to get response from LLM', details: error.message };
+    }
+  }
 }
