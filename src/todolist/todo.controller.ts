@@ -25,7 +25,7 @@ export class TodoController {
   }
 
 
-  @Get('saved')
+  @Get('saved/:title')
   async getTasks(@Param('title') title: string) {
     return await this.todoService.getTasks(title);
   }

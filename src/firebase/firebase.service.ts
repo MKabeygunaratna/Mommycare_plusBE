@@ -69,11 +69,6 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: users/${title}`);
     
-    // Ensure document exists
-    // await userRef.set(
-    //   { title, todolistDetails: []},
-    //   { merge: true }
-    // );
 
     await userRef.set(
       { title,description,date,isRecurring },
@@ -82,14 +77,14 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
      
     console.log(`Document users todo list /${title} initialized`);
 
-//    await userRef.update({
-//     todolistDetails : admin.firestore.FieldValue.arrayUnion({
-//     description,
-//     date,
-//     isRecurring
+   await userRef.update({
+    todolistDetails : admin.firestore.FieldValue.arrayUnion({
+    description,
+    date,
+    isRecurring
      
-//   }),
-// });
+  }),
+});
 
 //console.log(`Todo list saved for user: ${title}`);
 
@@ -105,16 +100,16 @@ return { success: false, message: error.message };
 // Retreive the data of the the To do List
 async gettodolist(title: string){
   try{
-   const userRef = db.collection('userT').doc(title);
+   const userRef = db.collection('usersT').doc(title);
    const userGet = await userRef.get();
-  
+    console.log('got the data from the firestore ', title);
    if(!userGet.exists){
      return { success: false, message: 'Title not found' };
    }
 
    const dataExctract = userGet.data();
  
-    return {success: true, title: dataExctract?.title};
+    return {success: true, title: dataExctract?.title, date: dataExctract?.date, description: dataExctract?.description, isRecurring: dataExctract?.isRecurring};
 
  }catch (error) {
    console.error('Error retrieving Todo List:', error);
@@ -127,10 +122,15 @@ async gettodolist(title: string){
     console.log('passed the data');
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: usersT/${title}`);
-      
-    
+
+    const userGet = await userRef.get(); 
+
+    if(!userGet.exists){
+      return { success: false, message: 'Title not found' };
+    }
+ 
     await userRef.update({      
-          isRecurring
+          isRecurring: isRecurring
       });
 
    } 
@@ -151,9 +151,31 @@ async gettodolist(title: string){
   );
    
  }
+ async getVaccinationRecords(vname:string){
+  try{
+    const userRef = db.collection('usersV').doc(vname);
+    const userGet = await userRef.get();
 
- async updateVaccinationRecords(){
-            
+    if(!userGet.exists){
+      return { success: false, message: 'Title not found' };
+    }
+    const dataExctract = userGet.data();
+ 
+    return {success: true, age: dataExctract?.age, date: dataExctract?.date, tvaccination: dataExctract?.tvaccination, vname: dataExctract?.vname};
+
+ }catch (error) {
+   console.error('Error retrieving Todo List:', error);
+   return { success: false, message: error.message };
+      }
+
+ }
+
+ async deleteVaccinationRecords(title: string){
+
+  const userRef = db.collection('usersV').doc(title);
+  console.log(`Checking document: users/${title}`);
+  await userRef.delete();
+  return { message: 'Task deleted successfully', title };
  }
 
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Param, Post, Get } from "@nestjs/common";
 import { VaccinationService } from "./vaccinatioin.service";
 @Controller('vac')
 export class VaccinationController{
@@ -13,4 +13,16 @@ export class VaccinationController{
     return score;
  }
 
+  @Get('savedVac/:title')
+   async getTasks(@Param('title') title: string) {
+     return await this.vacconatioService.getvaccinationRecords(title);
+   }
+
+
+ @Delete('deleteVac/:title')
+ async deletevaccination(@Param('title') title: string){
+       const deletevac =  await this.vacconatioService.deleteVaccinationRecords(title);
+       return deletevac;
+   }
+   
 }
