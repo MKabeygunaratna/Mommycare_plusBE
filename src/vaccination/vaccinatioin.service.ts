@@ -12,6 +12,7 @@ export class VaccinationService{
             return await this.firebaseService.saveVaccinationRecords(vname,age,tvaccination,date);
         } catch (error) {
             console.error('Error saving the vaccination records');
+<<<<<<< HEAD
             return {sucess:false,message:'Error saving the vaccination records'}
         }
   }
@@ -34,4 +35,9 @@ export class VaccinationService{
         }
       }
 
+=======
+            return {sucess:false,message:'Error saving the vaccination result'}
+        }
+  }
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 }

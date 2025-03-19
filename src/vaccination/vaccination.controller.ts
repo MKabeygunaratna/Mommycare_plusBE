@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Body, Controller, Delete, Param, Post, Get } from "@nestjs/common";
+=======
+import { Body, Controller, Post } from "@nestjs/common";
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 import { VaccinationService } from "./vaccinatioin.service";
 @Controller('vac')
 export class VaccinationController{
@@ -13,6 +17,7 @@ export class VaccinationController{
     return score;
  }
 
+<<<<<<< HEAD
   @Get('savedVac/:title')
    async getTasks(@Param('title') title: string) {
      return await this.vacconatioService.getvaccinationRecords(title);
@@ -26,3 +31,6 @@ export class VaccinationController{
    }
    
 }
+=======
+}
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b

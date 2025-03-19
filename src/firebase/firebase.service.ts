@@ -15,7 +15,13 @@ const db = admin.firestore();
 export class FirebaseService {
 
   // Save Quiz Result to Firestore
+<<<<<<< HEAD
   async saveQuizResult(userId: string, answers: string[], score: number, isDepressed: boolean) {
+=======
+
+  async saveQuizResult(userId: string, answers: number[], score: number) {
+
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
     try {
       const userRef = db.collection('users').doc(userId);
       console.log(`Checking document: users/${userId}`);
@@ -69,6 +75,14 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: users/${title}`);
     
+<<<<<<< HEAD
+=======
+    // Ensure document exists
+    // await userRef.set(
+    //   { title, todolistDetails: []},
+    //   { merge: true }
+    // );
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 
     await userRef.set(
       { title,description,date,isRecurring },
@@ -77,6 +91,7 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
      
     console.log(`Document users todo list /${title} initialized`);
 
+<<<<<<< HEAD
    await userRef.update({
     todolistDetails : admin.firestore.FieldValue.arrayUnion({
     description,
@@ -85,6 +100,16 @@ async savetodolist(title:string,description: string,date: string,isRecurring :bo
      
   }),
 });
+=======
+//    await userRef.update({
+//     todolistDetails : admin.firestore.FieldValue.arrayUnion({
+//     description,
+//     date,
+//     isRecurring
+     
+//   }),
+// });
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 
 //console.log(`Todo list saved for user: ${title}`);
 
@@ -100,16 +125,26 @@ return { success: false, message: error.message };
 // Retreive the data of the the To do List
 async gettodolist(title: string){
   try{
+<<<<<<< HEAD
    const userRef = db.collection('usersT').doc(title);
    const userGet = await userRef.get();
     console.log('got the data from the firestore ', title);
+=======
+   const userRef = db.collection('userT').doc(title);
+   const userGet = await userRef.get();
+  
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
    if(!userGet.exists){
      return { success: false, message: 'Title not found' };
    }
 
    const dataExctract = userGet.data();
  
+<<<<<<< HEAD
     return {success: true, title: dataExctract?.title, date: dataExctract?.date, description: dataExctract?.description, isRecurring: dataExctract?.isRecurring};
+=======
+    return {success: true, title: dataExctract?.title};
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 
  }catch (error) {
    console.error('Error retrieving Todo List:', error);
@@ -122,6 +157,7 @@ async gettodolist(title: string){
     console.log('passed the data');
     const userRef = db.collection('usersT').doc(title);
     console.log(`Checking document: usersT/${title}`);
+<<<<<<< HEAD
 
     const userGet = await userRef.get(); 
 
@@ -131,6 +167,12 @@ async gettodolist(title: string){
  
     await userRef.update({      
           isRecurring: isRecurring
+=======
+      
+    
+    await userRef.update({      
+          isRecurring
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
       });
 
    } 
@@ -151,6 +193,7 @@ async gettodolist(title: string){
   );
    
  }
+<<<<<<< HEAD
  async getVaccinationRecords(vname:string){
   try{
     const userRef = db.collection('usersV').doc(vname);
@@ -176,6 +219,11 @@ async gettodolist(title: string){
   console.log(`Checking document: users/${title}`);
   await userRef.delete();
   return { message: 'Task deleted successfully', title };
+=======
+
+ async updateVaccinationRecords(){
+            
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
  }
 
 

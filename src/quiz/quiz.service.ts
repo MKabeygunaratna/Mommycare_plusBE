@@ -1,23 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { FirebaseService } from '../firebase/firebase.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class QuizService {
-  constructor(private readonly firebaseService: FirebaseService) {}
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly emailService: EmailService,
+  ) {}
 
-  // Method to calculate the score based on answers
-  calculateScore(userId: string, answers: string[]): number {
-    const correctAnswers = ['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D', 'A', 'B']; // Example correct answers
-    let score = 0;
 
+<<<<<<< HEAD
     // Loop through answers and compare with correct answers
     // answers.forEach((answer, index) => {
     //   if (answer === correctAnswers[index]) {
     //     score += 3; // 3 points for each correct answer
     //   }
     // });
+=======
+ 
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
 
-    return score; // Return the calculated score
+  checkStatus(score: number){
+    return score>12 ? true : false;
   }
 
   checkStatus(score: number){
@@ -28,9 +33,50 @@ export class QuizService {
   async saveQuizResult(userId: string, answers: string[], score: number, isDepressed: boolean) {
     try {
       return await this.firebaseService.saveQuizResult(userId, answers, score,isDepressed);
+<<<<<<< HEAD
+=======
+
+  // Calculate the score based on answers
+  calculateScore(answers: number[]): number {
+    return answers.reduce((sum, score) => sum + score, 0);
+  }
+
+  // Determine the depression level
+  determineDepressionLevel(score: number): string {
+    if (score >= 19) {
+        return 'Severe';
+    } else if (score >= 12) {
+        return 'Mild';
+    } else {
+        return 'Normal';
+    }
+}
+
+  // Process the quiz submission: Calculate score, save, and send email
+  async processQuizSubmission(
+    userId: string,
+    answers: number[],
+    guardianEmail: string,
+    doctorEmail: string
+  ) {
+    try {
+      const score = this.calculateScore(answers);
+      const depressionLevel = this.determineDepressionLevel(score);
+
+      // Save the quiz result to Firebase
+      const result = await this.firebaseService.saveQuizResult(userId, answers, score);
+
+      // Send an email only if the depression level is Mild or Severe
+      if (depressionLevel !== 'Normal') {
+        await this.emailService.sendDepressionAlert(userId, depressionLevel, [guardianEmail, doctorEmail]);
+      }
+
+      return { success: true, message: 'Quiz submitted successfully.', depressionLevel, result };
+
+>>>>>>> 5ce7c73ab8f106def5b7c494fee55bbe72555a1b
     } catch (error) {
-      console.error('Error saving quiz result:', error);
-      return { success: false, message: 'Error saving quiz result.' };
+      console.error('Error processing quiz submission:', error);
+      return { success: false, message: 'Error processing quiz submission.' };
     }
   }
 
