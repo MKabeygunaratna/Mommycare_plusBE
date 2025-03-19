@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 
-import { QuizModule } from 'src/quiz/quiz.module';
 import { TodoModule } from './todolist/todo.module';
 import { VaccinationModule } from './vaccination/vaccination.module';
 import { ChatModule } from './chat/chat.module';
