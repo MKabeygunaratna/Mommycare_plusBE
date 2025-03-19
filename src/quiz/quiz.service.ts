@@ -9,6 +9,18 @@ export class QuizService {
     private readonly emailService: EmailService,
   ) {}
 
+
+ 
+
+  checkStatus(score: number){
+    return score>12 ? true : false;
+  }
+
+  // Save quiz result to Firebase
+  async saveQuizResult(userId: string, answers: string[], score: number, isDepressed: boolean) {
+    try {
+      return await this.firebaseService.saveQuizResult(userId, answers, score,isDepressed);
+
   // Calculate the score based on answers
   calculateScore(answers: number[]): number {
     return answers.reduce((sum, score) => sum + score, 0);
@@ -45,6 +57,7 @@ export class QuizService {
       }
 
       return { success: true, message: 'Quiz submitted successfully.', depressionLevel, result };
+
     } catch (error) {
       console.error('Error processing quiz submission:', error);
       return { success: false, message: 'Error processing quiz submission.' };

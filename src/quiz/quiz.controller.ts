@@ -10,8 +10,10 @@ export class QuizController {
   async submitQuiz(
     @Body() body: { userId: string; answers: number[]; guardianEmail: string; doctorEmail: string }
   ) {
+
     const { userId, answers, guardianEmail, doctorEmail } = body;
     return await this.quizService.processQuizSubmission(userId, answers, guardianEmail, doctorEmail);
+
   }
 
   // Endpoint to retrieve quiz results for a user
