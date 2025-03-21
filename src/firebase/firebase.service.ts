@@ -124,6 +124,12 @@ async gettodolist(title: string){
       }
  }
 
+ async gettodolistcheck(){
+  const snapshot = await db.collection('usersT').get();
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+
 //update the to do list task
    async updatetodolist(title:string, isRecurring: boolean){
     console.log('passed the data');
@@ -234,6 +240,5 @@ async sendMessageWEb(message: any, community: string) {
       return { success: false, message: error.message };
   }
 }
-
 
 }

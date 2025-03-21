@@ -25,11 +25,14 @@ export class TodoController {
   }
 
 
+  // @Get('saved')
+  // async getTasks(@Param('title') title: string) {
+  //   return await this.todoService.getTasks(title);
+  // }
   @Get('saved')
-  async getTasks(@Param('title') title: string) {
-    return await this.todoService.getTasks(title);
+  async getTasks() {
+    return await this.todoService.getTasks();
   }
-
   // @Put(':id')
   // async markTaskAsDone(@Param('id') id: string,isRecurring) {
   //   // return await this.todoService.markTaskAsDone(id);
