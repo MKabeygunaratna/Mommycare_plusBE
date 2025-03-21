@@ -14,29 +14,30 @@ const db = admin.firestore();
 
 export class FirebaseService {
 
+  getDb() {
+    return db;
+  }
+
   // Save Quiz Result to Firestore
-
   async saveQuizResult(userId: string, answers: number[], score: number) {
-
     try {
       const userRef = db.collection('users').doc(userId);
       console.log(`Checking document: users/${userId}`);
 
       // Ensure document exists
       await userRef.set(
-        { userId, quizResults: [] },
+        { userId, quizResults: [] },  
         { merge: true }
       );
 
       console.log(`Document users/${userId} initialized`);
 
-
       // Add quiz result
       await userRef.update({
         quizResults: admin.firestore.FieldValue.arrayUnion({
           answers,
-          score, 
-        }), 
+          score,
+        }),
       });
 
       console.log(`Quiz result saved for user: ${userId}`);
@@ -65,180 +66,124 @@ export class FirebaseService {
     }
   }
 
-//save the todo list
-async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
-  try {
-    const userRef = db.collection('usersT').doc(title);
-    console.log(`Checking document: users/${title}`);
-    
-    // Ensure document exists
-    // await userRef.set(
-    //   { title, todolistDetails: []},
-    //   { merge: true }
-    // );
+  // Save Todo List
+  async savetodolist(title: string, description: string, date: string, isRecurring: boolean) {
+    try {
+      const todoRef = db.collection('todolists').doc(title);
+      console.log(`Checking document: todolists/${title}`);
 
-    await userRef.set(
-      { title,description,date,isRecurring },
-      { merge: true }
-    );
-     
-    console.log(`Document users todo list /${title} initialized`);
-
-//    await userRef.update({
-//     todolistDetails : admin.firestore.FieldValue.arrayUnion({
-//     description,
-//     date,
-//     isRecurring
-     
-//   }),
-// });
-
-//console.log(`Todo list saved for user: ${title}`);
-
-
-return { success: true, message: 'Activities have been saved successfully' };
-} catch (error) {
-console.error('Error saving the to do list:', error);
-return { success: false, message: error.message };
-       }
-    }
-
-  
-// Retreive the data of the the To do List
-async gettodolist(title: string){
-  try{
-   const userRef = db.collection('userT').doc(title);
-   const userGet = await userRef.get();
-  
-   if(!userGet.exists){
-     return { success: false, message: 'Title not found' };
-   }
-
-   const dataExctract = userGet.data();
- 
-    return {success: true, title: dataExctract?.title};
-
- }catch (error) {
-   console.error('Error retrieving Todo List:', error);
-   return { success: false, message: error.message };
-      }
- }
-
- async gettodolistcheck(){
-  const snapshot = await db.collection('usersT').get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
-
-
-//update the to do list task
-   async updatetodolist(title:string, isRecurring: boolean){
-    console.log('passed the data');
-    const userRef = db.collection('usersT').doc(title);
-    console.log(`Checking document: usersT/${title}`);
-      
-    
-    await userRef.update({      
-          isRecurring
-      });
-
-   } 
-
-
-// save the vaccination records
- async saveVaccinationRecords(vname:string, age: number, tvaccination: string, date: Date){
-  
-  const userRef = db.collection('usersV').doc(vname);
-  console.log(`Checking the collection is being created: with title ${vname}`)
-
-  await userRef.set(
-    { vname,
-      age,
-      tvaccination,
-      date },
-    { merge: true }
-  );
-   
- }
-
- async updateVaccinationRecords(){
-            
- }
-
-
-
-
- async sendMessage (userId: string, username: string, message: string){
-  try{
-  const messageData = {
-    userId,
-    username,
-    message,
-    timestamp: new Date().toISOString(),
-  };
-  
-  const usersChat = await db.collection('ChatMsg').add(messageData);
-  console.log(`Document users/${username} initialized`);
-
-  return { success: true, message: 'chat saved successfully' };
-
-  }catch(error){
-    console.error('Error saving chat details:', error);
-    return { success: false, message: error.message };
-  }     
-}
-
-
-// async sendMessageWEb ( message: any, community: string){
-//   try{
-      
-//   const usersChat =  db.collection('ChatMsg').doc(community);
-//   console.log(`Document users/${community} initialized`);
-
-//   await usersChat.set(
-//     { messages: []},
-//     { merge: true }
-//   );
-
-//   await usersChat.update({
-//     messages: admin.firestore.FieldValue.arrayUnion({
-//         text: message,
-//     })
-// });
-
-//   return { success: true, message: 'chat saved successfully' };
-
-//   }catch(error){
-//     console.error('Error saving chat details:', error);
-//     return { success: false, message: error.message };
-//   }     
-// }
-
-async sendMessageWEb(message: any, community: string) {
-  try {
-      const usersChat = db.collection('ChatMsg').doc(community);
-      console.log(`Document ChatMsg/${community} initialized`);
-
-      // Generate timestamp separately
-      const timestamp = new Date().toISOString(); 
-
-      await usersChat.set(
-          { messages: [] }, // Ensure the field exists
-          { merge: true }
+      await todoRef.set(
+        { title, description, date, isRecurring },
+        { merge: true }
       );
 
-      await usersChat.update({
-          messages: admin.firestore.FieldValue.arrayUnion({
-              text: message,
-              timestamp: timestamp // Use the pre-generated timestamp
-          })
-      });
-
-      return { success: true, message: 'Chat saved successfully' };
-
-  } catch (error) {
-      console.error('Error saving chat details:', error);
+      console.log(`Document todolists/${title} initialized`);
+      return { success: true, message: 'Todo list saved successfully' };
+    } catch (error) {
+      console.error('Error saving the todo list:', error);
       return { success: false, message: error.message };
+    }
+  }
+
+  // Retrieve Todo List data
+ // Retrieve all Todo List data
+async gettodolistcheck() {
+  try {
+    const snapshot = await db.collection('todolists').get();
+
+    if (snapshot.empty) {
+      return { success: false, message: 'No todo lists found' };
+    }
+
+    const todoLists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    return { success: true, todoLists };
+  } catch (error) {
+    console.error('Error retrieving todo lists:', error);
+    return { success: false, message: error.message };
   }
 }
 
+
+  // Update Todo List task
+  async updatetodolist(title: string, isRecurring: boolean) {
+    try {
+      const todoRef = db.collection('todolists').doc(title);
+      console.log(`Updating document: todolists/${title}`);
+
+      await todoRef.update({ isRecurring });
+
+      console.log(`Todo list updated for: ${title}`);
+      return { success: true, message: 'Todo list updated successfully' };
+    } catch (error) {
+      console.error('Error updating todo list:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Save Vaccination Records
+  async saveVaccinationRecords(vname: string, age: number, tvaccination: string, date: Date) {
+    try {
+      const vaccinationRef = db.collection('vaccinations').doc(vname);
+      console.log(`Checking vaccination record for: ${vname}`);
+
+      await vaccinationRef.set(
+        { vname, age, tvaccination, date },
+        { merge: true }
+      );
+
+      console.log(`Vaccination record saved for: ${vname}`);
+      return { success: true, message: 'Vaccination record saved successfully' };
+    } catch (error) {
+      console.error('Error saving vaccination record:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Send a Chat Message
+  async sendMessage(userId: string, username: string, message: string) {
+    try {
+      const messageData = {
+        userId,
+        username,
+        message,
+        timestamp: new Date().toISOString(),
+      };
+
+      const chatRef = await db.collection('ChatMsg').add(messageData);
+      console.log(`Message saved to ChatMsg for user: ${username}`);
+
+      return { success: true, message: 'Message saved successfully' };
+    } catch (error) {
+      console.error('Error saving chat message:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Send a Chat Message to a Community
+  async sendMessageWeb(message: any, community: string) {
+    try {
+      const communityRef = db.collection('ChatMsg').doc(community);
+      console.log(`Checking community: ChatMsg/${community}`);
+
+      const timestamp = new Date().toISOString(); // Generate timestamp separately
+
+      await communityRef.set(
+        { messages: [] }, // Ensure the field exists
+        { merge: true }
+      );
+
+      await communityRef.update({
+        messages: admin.firestore.FieldValue.arrayUnion({
+          text: message,
+          timestamp: timestamp, // Use the pre-generated timestamp
+        }),
+      });
+
+      return { success: true, message: 'Message saved to community successfully' };
+    } catch (error) {
+      console.error('Error saving message to community:', error);
+      return { success: false, message: error.message };
+    }
+  }
 }
