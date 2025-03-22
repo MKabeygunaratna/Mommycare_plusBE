@@ -4,4 +4,5 @@ export class QuizResult {
   score: number;
   result: string;
   timestamp: Date;
+  isDepressed: boolean;
 }
