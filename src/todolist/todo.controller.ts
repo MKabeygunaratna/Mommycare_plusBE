@@ -43,8 +43,8 @@ export class TodoController {
   }
   
 
-  @Delete(':id')
-  async deleteTask(@Param('id') id: string) {
-    return await this.todoService.deleteTask(id);
+  @Delete(':title')
+  async deleteTask(@Param('title') title: string) {
+    return await this.todoService.deleteTask(title);
   }
 }
