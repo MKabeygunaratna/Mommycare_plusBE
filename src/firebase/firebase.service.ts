@@ -121,6 +121,14 @@ async gettodolistcheck() {
     }
   }
 
+  async deletetask(title: string){
+    const userRef = db.collection('usersT').doc(title);
+    console.log(`Checking document: users/${title}`);
+    await userRef.delete();
+    return { message: 'vaciination deleted successfully', title };
+   }
+
+
   // Save Vaccination Records
   async saveVaccinationRecords(vname: string, age: number, tvaccination: string, date: Date) {
     try {

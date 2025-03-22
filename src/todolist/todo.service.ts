@@ -90,10 +90,19 @@ return await  this.firebaseService.gettodolistcheck();
   }
 
 
-  async deleteTask(id: string) {
-    const taskRef = this.firestore.collection(this.collectionName).doc(id);
-    await taskRef.delete();
-    return { message: 'Task deleted successfully', id };
-  }
+  // async deleteTask(id: string) {
+  //   const taskRef = this.firestore.collection(this.collectionName).doc(id);
+  //   await taskRef.delete();
+  //   return { message: 'Task deleted successfully', id };
+  // }
 
+  async deleteTask(title: string){
+    try{
+      return await this.firebaseService.deletetask(title);
+
+    }catch(error){
+      console.error('Error deleting  the task:', error);
+      return {success: false,message: 'Error saving todo-list result'};
+    }
+  }
 }
