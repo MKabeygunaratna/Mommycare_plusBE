@@ -161,7 +161,7 @@ async gettodolistcheck() {
   }
 
   // Send a Chat Message to a Community
-  async sendMessageWeb(message: any, community: string) {
+  async sendMessageWEb(message: any, community: string) {
     try {
       const communityRef = db.collection('ChatMsg').doc(community);
       console.log(`Checking community: ChatMsg/${community}`);
