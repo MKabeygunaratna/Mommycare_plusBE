@@ -3,7 +3,8 @@ import { ChatbotController } from './chatbot.controller';
 import { ChatbotService } from './chatbot.service';
 
 @Module({
-  controllers: [ChatbotController],  // Register controllers
-  providers: [ChatbotService],      // Register services
+  controllers: [ChatbotController],
+  providers: [ChatbotService],
+  exports: [ChatbotService]
 })
 export class ChatbotModule {}
