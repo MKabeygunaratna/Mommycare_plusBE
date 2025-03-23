@@ -10,12 +10,18 @@ import { ChatService } from './chat/chat.service';
 import { QuizModule } from './quiz/quiz.module';
 import { EmailModule } from './email/email.module'; 
 import { ChatbotModule } from './chatbot/chatbot.module';
+
+import { ChatbotVoiceModule } from './chatbotvoice/chatbotvoice.module';
+
+
+
 import { AuthModule } from './auth/auth.module';
 import {SleepTrackerModule} from './sleep-tracker/sleep-tracker.module';
 @Module({
-  imports: [QuizModule,TodoModule,VaccinationModule,ChatModule,FirebaseModule,EmailModule,ChatbotModule, AuthModule, SleepTrackerModule],
+  imports: [QuizModule,TodoModule,VaccinationModule,ChatModule,FirebaseModule,EmailModule,ChatbotModule, AuthModule, SleepTrackerModule,ChatbotVoiceModule,ChatbotModule],
   controllers: [AppController],  // Include controllers
   providers: [AppService,ChatService], 
+
 
 })
 export class AppModule {}
