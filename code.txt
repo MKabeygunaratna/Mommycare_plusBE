@@ -1,0 +1,1335 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from './../src/app.module';
+
+describe('AppController (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  it('/ (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect('Hello World!');
+  });
+});
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import * as dotenv from 'dotenv';
+
+dotenv.config(); // Load environment variables
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Enable CORS for frontend communication
+  app.enableCors();
+
+  
+  await app.listen(3000);
+  console.log(`Server is running on http://localhost:${3000}`);
+}
+bootstrap();
+import { Injectable } from '@nestjs/common';
+import { Firestore } from '@google-cloud/firestore';
+import { FirebaseService } from '../firebase/firebase.service';
+import { Socket } from 'socket.io';
+
+@Injectable()
+export class ChatService {
+  constructor(private readonly firebaseService: FirebaseService) {}
+
+  async sendMessagetoSave( message: any){
+    const community = 'Community';
+    try{
+      return await this.firebaseService.sendMessageWEb(message,community);
+    }catch(error){
+       console.error('Error sending the message to the database',error);
+       return { success: false, message: 'Error saving chat.' };
+    }
+   }
+  
+   async sendMessagetoSave2(userId: string, username: string, message: string){
+    try{
+      return await this.firebaseService.sendMessage(userId,username, message);
+    }catch(error){
+       console.error('Error sending the message to the database',error);
+       return { success: false, message: 'Error saving chat.' };
+    }
+   }
+  
+  }
+  import {
+    WebSocketGateway,
+    SubscribeMessage,
+    WebSocketServer,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    MessageBody,
+  } from '@nestjs/websockets';
+  import { Server,Socket } from 'socket.io';
+  import { ChatService } from './chat.service';
+  
+  @WebSocketGateway({ cors: {origin:'*'}})
+  export class ChatGateway implements OnGatewayConnection,OnGatewayDisconnect{
+    @WebSocketServer()// to send multiple cleints we use webserver
+    server: Server;
+  
+    constructor(private readonly chatService: ChatService) {}
+  
+     handleConnection(client: Socket) {
+      console.log("New user connected", client.id);
+      
+      client.broadcast.emit('User joined',{message: `user joined the chat:${client.id}`})
+     }
+  
+     handleDisconnect(client: Socket) {
+      console.log(" user disconnected....", client.id);
+      this.server.emit('User left',{message: `user left the chat:${client.id}`});
+     }
+  
+    @SubscribeMessage('sendMessage')
+    async handleMessage( @MessageBody() message:any) {
+        this.server.emit('message', message);//broadcastinf the message to all clients
+  
+        console.log("Message:", message);
+         
+         const msg = await this.chatService.sendMessagetoSave( message);
+       return msg;
+    }
+   
+  }
+  
+  import { Controller, Post, Get, Body } from '@nestjs/common';
+import { ChatService } from './chat.service';
+
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
+
+  @Post('send')
+  async sendMessage(
+    @Body() body: { userId: string; username: string; message: string },
+  ) {
+    // return this.chatService.sendMessage(body.userId, body.username, body.message);
+    const chat = await this.chatService.sendMessagetoSave2(body.userId, body.username, body.message);
+    return chat
+  }
+}import { Module } from '@nestjs/common';
+import { ChatService } from './chat.service';
+import { ChatController } from './chat.controller';
+import { FirebaseModule } from 'src/firebase/firebase.module';
+import { ChatGateway } from './chat.gateway';
+
+@Module({
+  imports:[FirebaseModule],
+  controllers: [ChatController],
+  providers: [ChatService, ChatGateway],
+  exports: [ChatService], // Export service if needed in other modules
+})
+export class ChatModule {}export const googleFitConfig = {
+  clientId: 'Y476115653187-3hrfto1aeu1nf9ilad1oor4gp3pmevjd.apps.googleusercontent.com',
+  clientSecret: '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',
+  redirectUri: 'http://localhost:3000/auth/google/callback',
+};// import * as admin from 'firebase-admin';
+// const serviceAccount = require('../../firebase-service-account.json'); // Use require here
+
+
+var admin = require("firebase-admin");
+
+var serviceAccount = require("../../firebase-service-account.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+export const db = admin.firestore(); // Export the Firestore instance
+import { Controller, Post, Body, Get, Res } from '@nestjs/common';
+import { Response } from 'express';
+import { AuthService } from './auth.service';
+import { SignupDto } from './signup.dto';
+import { LoginDto } from './login.dto';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  // Signup route
+  @Post('signup')
+  async signup(@Body() signupDto: SignupDto, @Res() res: Response) {
+    try {
+      const response = await this.authService.signup(signupDto);
+      return res.status(201).json(response);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+  }
+
+  // Login route
+  @Post('login')
+  async login(@Body() loginDto: LoginDto, @Res() res: Response) {
+    try {
+      const response = await this.authService.login(loginDto);
+      return res.status(200).json(response);
+    } catch (error) {
+      return res.status(401).json({ message: error.message });
+    }
+  }
+}// dto/login.dto.ts
+import { IsEmail, IsNotEmpty } from 'class-validator';
+
+export class LoginDto {
+  @IsEmail()
+  readonly email: string;
+
+  @IsNotEmpty()
+  readonly password: string;
+}// strategies/jwt.strategy.ts
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { FirebaseService } from '../firebase/firebase.service';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private firebaseService: FirebaseService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET || 'your-secret-key',
+    });
+  }
+
+  async validate(payload: any) {
+    const db = this.firebaseService.getDb();
+    const userSnapshot = await db
+      .collection('users')
+      .where('email', '==', payload.email)
+      .get();
+
+    if (userSnapshot.empty) {
+      return null;
+    }
+
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    
+    // Don't include password in the returned user
+    const { password, ...userWithoutPassword } = userData;
+    
+    return {
+      id: userDoc.id,
+      ...userWithoutPassword,
+    };
+  }
+}import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as admin from 'firebase-admin';
+import * as bcrypt from 'bcrypt';
+import { SignupDto } from './signup.dto';
+import { LoginDto } from './login.dto';
+import { FirebaseService } from '../firebase/firebase.service';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  // Generate JWT token
+  generateToken(payload: any): string {
+    return this.jwtService.sign(payload);
+  }
+
+  // Login with email and password
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const db = this.firebaseService.getDb();
+    const userRef = db.collection('users');
+    const userSnapshot = await userRef.where('email', '==', email).get();
+
+    if (userSnapshot.empty) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const userDoc = userSnapshot.docs[0];
+    const userData = userDoc.data();
+    const passwordMatch = await bcrypt.compare(password, userData.password);
+
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const { password: _, email: userEmail, ...userWithoutPassword } = userData;
+    const user = {
+      id: userDoc.id,
+      email: userEmail,
+      ...userWithoutPassword,
+    };
+
+    const accessToken = this.generateToken({ sub: user.id, email: user.email });
+
+    return {
+      user,
+      accessToken,
+    };
+  }
+
+  // Signup new user
+  async signup(signupDto: SignupDto) {
+    const { name, email, password } = signupDto;
+    const db = this.firebaseService.getDb();
+    const userRef = db.collection('users');
+
+    const existingUserSnapshot = await userRef.where('email', '==', email).get();
+    if (!existingUserSnapshot.empty) {
+      throw new ConflictException('Email already exists');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = {
+      name,
+      email,
+      password: hashedPassword,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    const userDocRef = await userRef.add(newUser);
+    const userId = userDocRef.id;
+    await userDocRef.update({ userId });
+
+    return { 
+      message: 'Signup successful', 
+      userId, 
+      email
+    };
+  }
+}import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy, StrategyOptions } from 'passport-google-oauth20';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+
+@Injectable()
+export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  constructor() {
+    super({
+      clientID: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      callbackURL: 'http://localhost:3000/auth/google/callback',
+      scope: ['profile', 'email', 'https://www.googleapis.com/auth/fitness.sleep.read'],
+    } as StrategyOptions); // ✅ Explicitly define StrategyOptions
+  }
+
+  async validate(accessToken: string, refreshToken: string, profile: any) {
+    return {
+      googleId: profile.id,
+      displayName: profile.displayName,
+      email: profile.emails[0].value,
+      accessToken: accessToken,
+    };
+  }
+}
+import { IsNotEmpty } from 'class-validator';
+
+export class GoogleTokenDto {
+  @IsNotEmpty()
+  readonly idToken: string;
+}// auth.module.ts
+import { Module } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
+import { GoogleStrategy } from './google.strategy';
+import { FirebaseModule } from '../firebase/firebase.module';
+
+@Module({
+  imports: [
+    FirebaseModule,
+    PassportModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'your-secret-key',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  exports: [AuthService],
+})
+export class AuthModule {}
+
+// dto/signup.dto.ts
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
+
+export class SignupDto {
+  @IsNotEmpty()
+  readonly name: string;
+
+  @IsEmail()
+  readonly email: string;
+
+  @IsNotEmpty()
+  @MinLength(6)
+  readonly password: string;
+}import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+
+@Injectable()
+export class ChatbotService {
+  private ENGLISH_LLM_API_URL = 'http://127.0.0.1:8000/get_answer/';
+  private SINHALA_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_sinhala/';
+
+  private detectLanguagePercentage(text: string): string {
+    const sinhalaRegex = /[\u0D80-\u0DFF]/g; // Unicode range for Sinhala script
+    const englishRegex = /[a-zA-Z]/g;
+
+    const sinhalaMatches = text.match(sinhalaRegex) || [];
+    const englishMatches = text.match(englishRegex) || [];
+
+    const totalChars = text.length;
+    if (totalChars === 0) {
+      throw new Error("No text provided.");
+    }
+
+    const sinhalaPercentage = ((sinhalaMatches.length / totalChars) * 100);
+    const englishPercentage = (englishMatches.length / totalChars) * 100 + 10;
+
+    console.log(`Sinhala: ${sinhalaPercentage.toFixed(2)}%`);
+    console.log(`English: ${englishPercentage.toFixed(2)}%`);
+
+    return englishPercentage > sinhalaPercentage ? this.ENGLISH_LLM_API_URL : this.SINHALA_LLM_API_URL;
+  }
+
+  async getLLMResponse(query: string) {
+    try {
+      const url = this.detectLanguagePercentage(query);
+      const response = await axios.post(url, { query });
+      return response.data;
+    } catch (error) {
+
+      return { error: 'Failed to get response from LLM', details: error.message };
+    }
+  }
+}
+import { Module } from '@nestjs/common';
+import { ChatbotController } from './chatbot.controller';
+import { ChatbotService } from './chatbot.service';
+
+@Module({
+  controllers: [ChatbotController],
+  providers: [ChatbotService],
+  exports: [ChatbotService]
+})
+export class ChatbotModule {}import { Controller, Post, Body } from '@nestjs/common';
+import { ChatbotService } from './chatbot.service';
+
+@Controller('chatbot')
+export class ChatbotController {
+  constructor(private readonly chatbotService: ChatbotService) {}
+
+  @Post('ask')
+  async askQuestion(@Body('query') query: string) {
+    console.log('MEssage have been send to the backend');
+    return this.chatbotService.getLLMResponse(query);
+  }
+}import { Module } from '@nestjs/common';
+import { ChatbotVoiceController } from './chatbotvoice.controller';
+import { ChatbotVoiceService } from './chatbotvoice.service';
+import { MulterModule } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+
+@Module({
+  imports: [
+    MulterModule.register({
+      storage: diskStorage({
+        destination: './uploads/audio',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+        },
+      }),
+    }),
+  ],
+  controllers: [ChatbotVoiceController],
+  providers: [ChatbotVoiceService],
+  exports: [ChatbotVoiceService]
+})
+export class ChatbotVoiceModule {}import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ChatbotVoiceService } from './chatbotvoice.service';
+
+// Define the MulterFile interface (same as in service file)
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
+@Controller('chatbotvoice')
+export class ChatbotVoiceController {
+  constructor(private readonly chatbotVoiceService: ChatbotVoiceService) {}
+
+  @Post('ask')
+  @UseInterceptors(FileInterceptor('audio_file'))
+  async askVoiceQuestion(@UploadedFile() file: MulterFile) {
+    return this.chatbotVoiceService.getLLMVoiceResponse(file);
+  }
+}import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+// Import FormData properly using require
+const FormData = require('form-data');
+import * as fs from 'fs';
+
+// Fix the import for Multer types
+import { Multer } from 'multer'; // Add this import
+
+// Define the File interface if you prefer not to import it
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
+@Injectable()
+export class ChatbotVoiceService {
+  private VOICE_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_voice/';
+
+  // Use the MulterFile interface instead of Express.Multer.File
+  async getLLMVoiceResponse(file: MulterFile) {
+    try {
+      // Create form data for sending the file
+      const formData = new FormData();
+      formData.append('audio_file', fs.createReadStream(file.path), {
+        filename: file.originalname,
+        contentType: file.mimetype,
+      });
+
+      console.log('Sending audio file to:', this.VOICE_LLM_API_URL);
+      console.log('File details:', {
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: file.path
+      });
+
+      // Send request to FastAPI endpoint
+      const response = await axios.post(this.VOICE_LLM_API_URL, formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+        timeout: 30000 // Add a reasonable timeout
+      });
+
+      // Clean up the file after successful processing
+      try {
+        fs.unlinkSync(file.path);
+        console.log(`Cleaned up temporary file: ${file.path}`);
+      } catch (cleanupError) {
+        console.error(`Failed to clean up file: ${cleanupError.message}`);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error in getLLMVoiceResponse:', error.message);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+      }
+      
+      // Clean up the file on error as well
+      try {
+        if (file && file.path) {
+          fs.unlinkSync(file.path);
+        }
+      } catch (cleanupError) {
+        // Silently fail on cleanup error in error handler
+      }
+      
+      return { 
+        error: 'Failed to process voice query', 
+        details: error.message,
+        status: error.response?.status
+      };
+    }
+  }
+}import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class AppService {
+  getHello(): string {
+    return 'Hello World!';
+  }
+}
+import { Injectable } from '@nestjs/common';
+import { FirebaseService } from '../firebase/firebase.service';
+import { EmailService } from '../email/email.service';
+
+@Injectable()
+export class QuizService {
+  constructor(
+    private readonly firebaseService: FirebaseService,
+    private readonly emailService: EmailService,
+  ) {}
+
+  // Calculate the score based on answers
+  calculateScore(answers: number[]): number {
+    return answers.reduce((sum, score) => sum + score, 0);
+  }
+
+  // Determine the depression level
+  determineDepressionLevel(score: number): string {
+    if (score >= 19) {
+        return 'Severe';
+    } else if (score >= 12) {
+        return 'Mild';
+    } else {
+        return 'Normal';
+    }
+}
+
+  // Process the quiz submission: Calculate score, save, and send email
+  async processQuizSubmission(
+    userId: string,
+    answers: number[],
+    guardianEmail: string,
+    doctorEmail: string
+  ) {
+    try {
+      const score = this.calculateScore(answers);
+      const depressionLevel = this.determineDepressionLevel(score);
+
+      // Save the quiz result to Firebase
+      const result = await this.firebaseService.saveQuizResult(userId, answers, score);
+
+      // Send an email only if the depression level is Mild or Severe
+      if (depressionLevel !== 'Normal') {
+        await this.emailService.sendDepressionAlert(userId, depressionLevel, [guardianEmail, doctorEmail]);
+      }
+
+      return { success: true, message: 'Quiz submitted successfully.', depressionLevel, result };
+    } catch (error) {
+      console.error('Error processing quiz submission:', error);
+      return { success: false, message: 'Error processing quiz submission.' };
+    }
+  }
+
+  // Retrieve quiz results for a user
+  async getQuizResults(userId: string) {
+    try {
+      return await this.firebaseService.getQuizResults(userId);
+    } catch (error) {
+      console.error('Error retrieving quiz results:', error);
+      return { success: false, message: 'Error retrieving quiz results.' };
+    }
+  }
+}
+export class QuizResult {
+  userId: string;
+  answers: number[];
+  score: number;
+  result: string;
+  timestamp: Date;
+  isDepressed: boolean;
+}import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { QuizService } from './quiz.service';
+
+@Controller('quiz')
+export class QuizController {
+  constructor(private readonly quizService: QuizService) {}
+
+  // Endpoint to submit the quiz
+  @Post('submit')
+  async submitQuiz(
+    @Body() body: { userId: string; answers: number[]; guardianEmail: string; doctorEmail: string }
+  ) {
+    const { userId, answers, guardianEmail, doctorEmail } = body;
+    return await this.quizService.processQuizSubmission(userId, answers, guardianEmail, doctorEmail);
+  }
+
+  // Endpoint to retrieve quiz results for a user
+  @Get('results/:userId')
+  async getQuizResults(@Param('userId') userId: string) {
+    return await this.quizService.getQuizResults(userId);
+  }
+}
+import { Module } from '@nestjs/common';
+import { QuizService } from './quiz.service';
+import { QuizController } from './quiz.controller';
+import { FirebaseModule } from '../firebase/firebase.module';
+import { EmailModule } from '../email/email.module'; // Import EmailModule
+
+@Module({
+  imports: [FirebaseModule, EmailModule], // Add EmailModule here
+  controllers: [QuizController],
+  providers: [QuizService],
+})
+export class QuizModule {}
+import { Controller, Post, Headers } from '@nestjs/common';
+import { SleepTrackerService } from './sleep-tracker.service';
+
+@Controller('sleep-tracker')
+export class SleepTrackerController {
+  constructor(private readonly sleepTrackerService: SleepTrackerService) {}
+
+  @Post('data')
+  async getSleepData(@Headers('Authorization') authHeader: string) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return { error: 'Missing or invalid Authorization header' };
+    }
+
+    const accessToken = authHeader.split(' ')[1]; // Extract the token
+    return this.sleepTrackerService.getSleepData(accessToken);
+  }
+}
+import { Injectable } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+
+@Injectable()
+export class SleepTrackerService {
+  constructor(private readonly httpService: HttpService) {}
+
+  async getSleepData(accessToken: string) {
+    const url = 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate';
+
+    const requestBody = {
+      aggregateBy: [{ dataTypeName: 'com.google.sleep.segment' }],
+      bucketByTime: { durationMillis: 86400000 }, // 1 day
+      startTimeMillis: Date.now() - 7 * 24 * 60 * 60 * 1000, // Last 7 days
+      endTimeMillis: Date.now(),
+    };
+
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const response = await firstValueFrom(this.httpService.post(url, requestBody, { headers }));
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching sleep data:', error.response?.data || error.message);
+      throw new Error('Failed to fetch sleep data');
+    }
+  }
+}
+export class SleepData {
+  id: string;
+  userId: string;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+}import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { SleepTrackerService } from './sleep-tracker.service';
+import { SleepTrackerController } from './sleep-tracker.controller';
+
+@Module({
+  imports: [HttpModule],
+  controllers: [SleepTrackerController],
+  providers: [SleepTrackerService],
+})
+export class SleepTrackerModule {}
+import { Module } from '@nestjs/common';
+
+import { TodoModule } from './todolist/todo.module';
+import { VaccinationModule } from './vaccination/vaccination.module';
+import { ChatModule } from './chat/chat.module';
+import { FirebaseModule } from './firebase/firebase.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ChatService } from './chat/chat.service';
+import { QuizModule } from './quiz/quiz.module';
+import { EmailModule } from './email/email.module'; 
+import { ChatbotModule } from './chatbot/chatbot.module';
+
+import { ChatbotVoiceModule } from './chatbotvoice/chatbotvoice.module';
+
+
+
+import { AuthModule } from './auth/auth.module';
+import {SleepTrackerModule} from './sleep-tracker/sleep-tracker.module';
+@Module({
+  imports: [QuizModule,TodoModule,VaccinationModule,ChatModule,FirebaseModule,EmailModule,ChatbotModule, AuthModule, SleepTrackerModule,ChatbotVoiceModule,ChatbotModule],
+  controllers: [AppController],  // Include controllers
+  providers: [AppService,ChatService], 
+
+
+})
+export class AppModule {}
+import { Module } from '@nestjs/common';
+import { TodoController } from './todo.controller';
+import { TodoService } from './todo.service';
+import { FirebaseModule } from 'src/firebase/firebase.module';
+
+@Module({
+  imports: [FirebaseModule],
+  controllers: [TodoController],
+  providers: [TodoService],
+})
+export class TodoModule {}
+import { IsNotEmpty, IsBoolean, IsString } from 'class-validator';
+
+
+export class CreateTaskDto {
+  @IsNotEmpty()
+  @IsString()
+  title: string;
+  
+  @IsString()
+  description: string;
+  
+  @IsNotEmpty()
+  @IsString()
+  date: string;
+
+  @IsNotEmpty()
+  @IsString()
+  time: string;
+
+  @IsBoolean()
+  isRecurring: boolean;
+}
+export class AddTask {
+    title: string;
+    description: string;
+    date: Date;
+    time: string; // Can be stored in "HH:mm" format
+    isRecurring: boolean;
+    isCompleted: boolean = false;
+       
+}import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { TodoService } from './todo.service';
+//import { CreateTaskDto } from './dto/create-task.dto';
+import { CreateTaskDto } from './create-task.dto';
+
+
+@Controller('todo')
+export class TodoController {
+  
+  constructor(private readonly todoService: TodoService) {}
+
+  // @Post('add')
+  // async addTask(@Body() createTaskDto: CreateTaskDto) {
+  //   return await this.todoService.addTask(createTaskDto);
+  // }
+
+  @Post('add')
+  async addTask(@Body() body: { title: string,description: string,date :string, isRecurring: boolean} ) {
+    const {title, description,date,isRecurring} = body;
+   // const addtodo  = this.todoService.addTask(title, description,date,isRecurring)
+    // return await this.todoService.addTask(createTaskDto);
+
+    const savedfirebase = this.todoService.savetodolist(title,description,date,isRecurring);
+      return savedfirebase;
+  }
+
+
+  // @Get('saved')
+  // async getTasks(@Param('title') title: string) {
+  //   return await this.todoService.getTasks(title);
+  // }
+  @Get('saved')
+  async getTasks() {
+    return await this.todoService.getTasks();
+  }
+  // @Put(':id')
+  // async markTaskAsDone(@Param('id') id: string,isRecurring) {
+  //   // return await this.todoService.markTaskAsDone(id);
+  //   return await this.todoService.markTaskAsDone(title,isRecurring);
+  // }
+
+  @Put('update/:title')
+  async markTaskAsDone(@Param('title') title: string) {
+   
+    return await this.todoService.markTaskAsDone(title);
+  }
+  
+
+  @Delete(':title')
+  async deleteTask(@Param('title') title: string) {
+    return await this.todoService.deleteTask(title);
+  }
+}
+import { Injectable } from '@nestjs/common';
+import { Firestore,Timestamp } from '@google-cloud/firestore';
+//import { CreateTaskDto } from './dto/create-task.dto';
+import { CreateTaskDto } from './create-task.dto';
+import { FirebaseService } from '../firebase/firebase.service';
+
+@Injectable()
+export class TodoService {
+ private firestore = new Firestore();
+  private collectionName = 'tasks';
+ constructor(private readonly firebaseService: FirebaseService) {}
+
+  // async addTask(createTaskDto: CreateTaskDto) {
+  //   const { title, description, date, time, isRecurring } = createTaskDto;
+  //   const task = {
+  //     title,
+  //     description,
+  //     date,
+  //     time,  
+  //     isRecurring,
+  //     isCompleted: false,
+  //     createdAt: Timestamp.now(),
+  //   };
+  //   const docRef = await this.firestore.collection(this.collectionName).add(task);
+  //   return { id: docRef.id, ...task };
+  // }
+
+  // async addTask(title: string,description: string,date :string, isRecurring: boolean ) {
+  //   //const { title, description, date, time, isRecurring } = createTaskDto;
+  //   const task = {
+  //     title,
+  //     description,
+  //     date,
+  //    // time,  
+  //     isRecurring,
+  //     isCompleted: false,
+  //     createdAt: Timestamp.now(),
+  //   };
+  //   const docRef = await this.firestore.collection(this.collectionName).add(task);
+  //   return { id: docRef.id, ...task };
+  // }
+    
+    async savetodolist(title:string,description: string,date: string,isRecurring :boolean){
+      
+      try{
+        return await this.firebaseService.savetodolist(title,description,date,isRecurring);
+        
+      }catch(error){
+        console.error('Error saving quiz result:', error);
+        return {success: false,message: 'Error saving todo-list result'};
+      }
+}
+
+  // async getTasks() {
+  //   const snapshot = await this.firestore.collection(this.collectionName).get();
+  //   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  // }
+    
+  // Retrieve quiz results for a user
+  // async getTasks(title: string) {
+  //   try {
+  //     return await this.firebaseService.gettodolist(title);
+  //   } catch (error) {
+  //     console.error('Error retrieving To do list:', error);
+  //     return { success: false, message: 'Error retrieving to do lists.' };
+  //   }
+  // }
+
+  async getTasks() {
+    // const snapshot = await this.firestore.collection(this.collectionName).get();
+    // return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+return await  this.firebaseService.gettodolistcheck();
+
+  }
+
+
+  async markTaskAsDone(title: string) {
+   const isRecurring: boolean = true;
+   console.log(title);
+   try{
+    return await this.firebaseService.updatetodolist(title,isRecurring);
+   }catch(error){
+    console.error('Error retrieving mark as done.',error);
+    return{success: false,message: 'Erro retrieving mark as done.'};
+   }
+
+    // const taskRef = this.firestore.collection(this.collectionName).doc(id);
+    // await taskRef.update({ isRecurring: true });
+    // return { message: 'Task marked as completed', id };
+  }
+
+
+  // async deleteTask(id: string) {
+  //   const taskRef = this.firestore.collection(this.collectionName).doc(id);
+  //   await taskRef.delete();
+  //   return { message: 'Task deleted successfully', id };
+  // }
+
+  async deleteTask(title: string){
+    try{
+      return await this.firebaseService.deletetask(title);
+
+    }catch(error){
+      console.error('Error deleting  the task:', error);
+      return {success: false,message: 'Error saving todo-list result'};
+    }
+  }
+}
+import * as admin from 'firebase-admin';
+import * as serviceAccount from '../../firebase-service-account.json'; // Adjust the path to your JSON file
+
+// Explicitly cast the imported JSON to the correct type
+const serviceAccountConfig = serviceAccount as admin.ServiceAccount;
+
+// Initialize Firebase Admin with the service account credentials
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccountConfig),
+});
+
+// Firestore instance
+const db = admin.firestore();
+
+export class FirebaseService {
+
+  getDb() {
+    return db;
+  }
+
+  // Save Quiz Result to Firestore
+  async saveQuizResult(userId: string, answers: number[], score: number) {
+    try {
+      const userRef = db.collection('users').doc(userId);
+      console.log(`Checking document: users/${userId}`);
+
+      // Ensure document exists
+      await userRef.set(
+        { userId, quizResults: [] },  
+        { merge: true }
+      );
+
+      console.log(`Document users/${userId} initialized`);
+
+      // Add quiz result
+      await userRef.update({
+        quizResults: admin.firestore.FieldValue.arrayUnion({
+          answers,
+          score,
+        }),
+      });
+
+      console.log(`Quiz result saved for user: ${userId}`);
+      return { success: true, message: 'Quiz result saved successfully' };
+    } catch (error) {
+      console.error('Error saving quiz result:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Retrieve Quiz Results for a user
+  async getQuizResults(userId: string) {
+    try {
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await userRef.get();
+
+      if (!userDoc.exists) {
+        return { success: false, message: 'User not found' };
+      }
+
+      const data = userDoc.data();
+      return { success: true, quizResults: data?.quizResults || [] };
+    } catch (error) {
+      console.error('Error retrieving quiz results:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Save Todo List
+  async savetodolist(title: string, description: string, date: string, isRecurring: boolean) {
+    try {
+      const todoRef = db.collection('todolists').doc(title);
+      console.log(`Checking document: todolists/${title}`);
+
+      await todoRef.set(
+        { title, description, date, isRecurring },
+        { merge: true }
+      );
+
+      console.log(`Document todolists/${title} initialized`);
+      return { success: true, message: 'Todo list saved successfully' };
+    } catch (error) {
+      console.error('Error saving the todo list:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Retrieve Todo List data
+ // Retrieve all Todo List data
+async gettodolistcheck() {
+  try {
+    const snapshot = await db.collection('todolists').get();
+
+    if (snapshot.empty) {
+      return { success: false, message: 'No todo lists found' };
+    }
+
+    const todoLists = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    return { success: true, todoLists };
+  } catch (error) {
+    console.error('Error retrieving todo lists:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+
+  // Update Todo List task
+  async updatetodolist(title: string, isRecurring: boolean) {
+    try {
+      const todoRef = db.collection('todolists').doc(title);
+      console.log(`Updating document: todolists/${title}`);
+
+      await todoRef.update({ isRecurring });
+
+      console.log(`Todo list updated for: ${title}`);
+      return { success: true, message: 'Todo list updated successfully' };
+    } catch (error) {
+      console.error('Error updating todo list:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  async deletetask(title: string){
+    const userRef = db.collection('usersT').doc(title);
+    console.log(`Checking document: users/${title}`);
+    await userRef.delete();
+    return { message: 'vaciination deleted successfully', title };
+   }
+
+
+  // Save Vaccination Records
+  async saveVaccinationRecords(vname: string, age: number, tvaccination: string, date: Date) {
+    try {
+      const vaccinationRef = db.collection('vaccinations').doc(vname);
+      console.log(`Checking vaccination record for: ${vname}`);
+
+      await vaccinationRef.set(
+        { vname, age, tvaccination, date },
+        { merge: true }
+      );
+
+      console.log(`Vaccination record saved for: ${vname}`);
+      return { success: true, message: 'Vaccination record saved successfully' };
+    } catch (error) {
+      console.error('Error saving vaccination record:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Send a Chat Message
+  async sendMessage(userId: string, username: string, message: string) {
+    try {
+      const messageData = {
+        userId,
+        username,
+        message,
+        timestamp: new Date().toISOString(),
+      };
+
+      const chatRef = await db.collection('ChatMsg').add(messageData);
+      console.log(`Message saved to ChatMsg for user: ${username}`);
+
+      return { success: true, message: 'Message saved successfully' };
+    } catch (error) {
+      console.error('Error saving chat message:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  // Send a Chat Message to a Community
+  async sendMessageWEb(message: any, community: string) {
+    try {
+      const communityRef = db.collection('ChatMsg').doc(community);
+      console.log(`Checking community: ChatMsg/${community}`);
+
+      const timestamp = new Date().toISOString(); // Generate timestamp separately
+
+      await communityRef.set(
+        { messages: [] }, // Ensure the field exists
+        { merge: true }
+      );
+
+      await communityRef.update({
+        messages: admin.firestore.FieldValue.arrayUnion({
+          text: message,
+          timestamp: timestamp, // Use the pre-generated timestamp
+        }),
+      });
+
+      return { success: true, message: 'Message saved to community successfully' };
+    } catch (error) {
+      console.error('Error saving message to community:', error);
+      return { success: false, message: error.message };
+    }
+  }
+}
+// firebase.module.ts
+import { Module } from '@nestjs/common';
+import { FirebaseService } from './firebase.service';
+
+@Module({
+  providers: [FirebaseService],
+  exports: [FirebaseService], 
+})
+export class FirebaseModule {}
+import { Injectable } from "@nestjs/common";
+import { FirebaseService } from "src/firebase/firebase.service";
+
+@Injectable()
+export class VaccinationService{
+
+ constructor(private readonly firebaseService: FirebaseService) {}
+
+
+  async saveVaccinationRecords(vname:string, age: number, tvaccination: string, date: Date){
+        try {
+            return await this.firebaseService.saveVaccinationRecords(vname,age,tvaccination,date);
+        } catch (error) {
+            console.error('Error saving the vaccination records');
+            return {sucess:false,message:'Error saving the vaccination result'}
+        }
+  }
+}import { Body, Controller, Post } from "@nestjs/common";
+import { VaccinationService } from "./vaccinatioin.service";
+@Controller('vac')
+export class VaccinationController{
+ constructor (private readonly vacconatioService: VaccinationService){}
+
+ @Post('save')
+ async saveVaccination(
+    @Body() body: {vname: string;age: number; tvaccination: string; date: Date}
+){
+    const{ vname ,age , tvaccination, date} = body;
+    const score = await this.vacconatioService.saveVaccinationRecords(vname,age , tvaccination, date);
+    return score;
+ }
+
+}
+
+import { Module } from "@nestjs/common";
+import { VaccinationController } from "./vaccination.controller";
+import { VaccinationService } from "./vaccinatioin.service";
+import { FirebaseModule } from '../firebase/firebase.module';
+
+
+@Module({
+      imports: [FirebaseModule],
+      controllers: [VaccinationController],
+      providers: [VaccinationService],
+})
+export class VaccinationModule{}import { Test, TestingModule } from '@nestjs/testing';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+describe('AppController', () => {
+  let appController: AppController;
+
+  beforeEach(async () => {
+    const app: TestingModule = await Test.createTestingModule({
+      controllers: [AppController],
+      providers: [AppService],
+    }).compile();
+
+    appController = app.get<AppController>(AppController);
+  });
+
+  describe('root', () => {
+    it('should return "Hello World!"', () => {
+      expect(appController.getHello()).toBe('Hello World!');
+    });
+  });
+});
+declare module "*.json" {
+    const value: any;
+    export default value;
+  }import { Controller, Get } from '@nestjs/common';
+import { AppService } from './app.service';
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  getHello(): string {
+    return this.appService.getHello();
+  }
+}
+import { Module } from '@nestjs/common';
+import { EmailService } from './email.service';
+
+@Module({
+  providers: [EmailService],
+  exports: [EmailService],  // Export EmailService to use in other modules
+})
+export class EmailModule {}
+import { Injectable } from '@nestjs/common';
+import * as nodemailer from 'nodemailer';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+
+@Injectable()
+export class EmailService {
+  private transporter;
+
+
+  constructor() {
+    console.log('EMAIL_USER:', process.env.EMAIL_USER);
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
+
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, // Your email
+        pass: process.env.EMAIL_PASS, // Your app password (Use environment variables)
+      },
+      secure: false, // Set to false to allow non-secure connections
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
+        },
+    });
+  }
+
+  // Send an email alert for depression level
+  async sendDepressionAlert(userId: string, depressionLevel: string, recipients: string[]) {
+    const subject = 'Depression Level Alert';
+    const message = `The user (ID: ${userId}) has been identified with a depression level of: ${depressionLevel}. Please take necessary actions.`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: recipients,
+      subject,
+      text: message,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log(`Depression alert email sent successfully to: ${recipients.join(', ')}`);
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  }
+}
