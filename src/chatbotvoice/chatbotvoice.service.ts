@@ -4,11 +4,28 @@ import axios from 'axios';
 const FormData = require('form-data');
 import * as fs from 'fs';
 
+// Fix the import for Multer types
+import { Multer } from 'multer'; // Add this import
+
+// Define the File interface if you prefer not to import it
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
 @Injectable()
 export class ChatbotVoiceService {
   private VOICE_LLM_API_URL = 'http://127.0.0.1:8000/get_answer_voice/';
 
-  async getLLMVoiceResponse(file: Express.Multer.File) {
+  // Use the MulterFile interface instead of Express.Multer.File
+  async getLLMVoiceResponse(file: MulterFile) {
     try {
       // Create form data for sending the file
       const formData = new FormData();

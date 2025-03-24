@@ -7,6 +7,7 @@ export class ChatbotController {
 
   @Post('ask')
   async askQuestion(@Body('query') query: string) {
+    console.log('MEssage have been send to the backend');
     return this.chatbotService.getLLMResponse(query);
   }
 }
