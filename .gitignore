@@ -60,5 +60,5 @@ firebase-service-account.json
 
 # Ignore environment variables and service account
 .env
-firebase-service-account.json
+
 
