@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
-import * as serviceAccount from '../../firebase-service-account.json'; // Adjust the path to your JSON file
-
+//import * as serviceAccount from '../../firebase-service-account.json'; // Adjust the path to your JSON file
+import * as serviceAccount from 'firebase-service-account.json'
 // Explicitly cast the imported JSON to the correct type
 const serviceAccountConfig = serviceAccount as admin.ServiceAccount;
 
